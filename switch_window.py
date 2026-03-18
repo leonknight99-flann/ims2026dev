@@ -2,13 +2,7 @@ from operator import index
 import sys
 import os
 
-from configparser import ConfigParser
-from time import sleep
-
 from qtpy import QtCore, QtWidgets, QtGui
-
-from flann.vi.switch import Switch337
-from flann.vi.attenuator import Attenuator024, Attenuator625
 
 
 class MainWindow(QtWidgets.QWidget):
@@ -45,29 +39,25 @@ class MainWindow(QtWidgets.QWidget):
         self.whereIsSwitchesButton.setStyleSheet("QPushButton {background-color:rgb(218,233,221); color:black;}")
         self.whereIsSwitchesButton.clicked.connect(lambda: self.where_are_switches())
 
-        ## Layout 2
-        self.layout2 = QtWidgets.QGridLayout()
-        self.switchButtonMap = {}
-
-        # Layout 3
-        self.layout3 = QtWidgets.QHBoxLayout()
-        
-        self.layout3.addWidget(QtWidgets.QLabel("Messages:"))
         self.messageLineEdit = QtWidgets.QTextEdit()
         self.messageLineEdit.setStyleSheet("QTextEdit {background-color:white; color:black; border: 0px;}")
         self.messageLineEdit.setFixedHeight(25)
         self.messageLineEdit.setReadOnly(True)  # Read-only
 
+        ## Layout 2
+        self.layout2 = QtWidgets.QGridLayout()
+        self.switchButtonMap = {} 
+
         '''Layout'''
 
         self.layout1.addWidget(self.toggleAllSwitchesButton)
         self.layout1.addWidget(self.whereIsSwitchesButton)
-
-        self.layout3.addWidget(self.messageLineEdit)
+        self.layout1.addWidget(QtWidgets.QLabel("Messages:"))
+        self.layout1.addWidget(self.messageLineEdit)
 
         self.layoutMain.addLayout(self.layout1)
         self.layoutMain.addLayout(self.layout2)
-        self.layoutMain.addLayout(self.layout3)
+        # self.layoutMain.addLayout(self.layout3)
 
         self.setLayout(self.layoutMain)
     
@@ -96,10 +86,6 @@ class MainWindow(QtWidgets.QWidget):
                     self.switchButtonMap[f'{row}'+key].clicked.connect(lambda _, row=row: self.switches[row].toggle_all())
                     self.switchButtonMap[f'{row}'+key].clicked.connect(lambda _, row=row: self.messageLineEdit.setText(f'Toggling {self.switches_names[row]} Switch 1 and 2'))
                 self.layout2.addWidget(self.switchButtonMap[f'{row}'+key], row, col+1)
-
-
-    def closeEvent(self, event):
-        QtWidgets.QApplication.closeAllWindows()
 
     def toggle_selected_switch(self, switch_driver_number, switch_number):
         if self.switches:
@@ -142,76 +128,6 @@ class MainWindow(QtWidgets.QWidget):
             item = self.layout2.takeAt(0)
             if item.widget() is not None:
                 item.widget().deleteLater()
-
-    def connect_to_attenuator(self):
-        if self.connectToAttenuatorButton.isChecked():
-            try:
-                if self.attenuator024 is None:
-                    self.attenuator024 = Attenuator024(address=self.demoConfig['DEMO024']['address'], 
-                                                    timeout=float(self.demoConfig['DEMO024']['timeout']), 
-                                                    baudrate=int(self.demoConfig['DEMO024']['baudrate']), 
-                                                    timedelay=float(self.demoConfig['DEMO024']['sleep']))
-                    print('Attenuator 024 connected')
-                if self.attenuator625 is None:
-                    self.attenuator625 = Attenuator625(address=self.demoConfig['DEMO625']['address'], 
-                                                    tcp_port=int(self.demoConfig['DEMO625']['tcp_port']), 
-                                                    timedelay=float(self.demoConfig['DEMO625']['sleep']))
-                    print('Attenuator 625 connected')
-            except:
-                print('Connection Error')
-                self.messageLineEdit.setText(f'Connection Error {self.attenuator024} {self.attenuator625} {self.switches}')
-                self.connectToAttenuatorButton.setChecked(False)
-                return
-            self.messageLineEdit.setText('Attenuators connected')
-        
-        else:
-            if self.attenuator024 is not None:
-                self.attenuator024.close()
-                self.attenuator024 = None
-                print('Attenuator 024 disconnected')
-            if self.attenuator625 is not None:
-                self.attenuator625.close()
-                self.attenuator625 = None
-                print('Attenuator 625 disconnected')
-            self.messageLineEdit.setText('Attenuators disconnected')
-
-    def demo(self):
-        if self.demoButton.isChecked():
-            self.demoButton.setText("Stop")
-            self.start_demo()
-        else:
-            self.stop_demo()
-            self.demoButton.setText("Demo")
-
-    def start_demo(self):
-        self.messageLineEdit.setText('Starting demo')
-
-        if any([self.attenuator024 is None, self.attenuator625 is None, not self.switches]):
-            self.messageLineEdit.setText(f'Connection Error {self.attenuator024} {self.attenuator625} {self.switches}')
-            self.demoButton.setChecked(False)
-            self.demoButton.setText("Demo")
-            return
-        
-        self.timer.start(int(self.demoConfig['DEMO']['sleep']))  # Set the timer interval to the sleep time in milliseconds
-
-    def stop_demo(self):
-        self.messageLineEdit.setText('Stopping demo')
-        self.timer.stop()
-        self.messageLineEdit.setText('Demo stopped')
-
-    def running_demo(self):
-        print(self.demoSwitchBool)
-        self.demoSwitchBool = not self.demoSwitchBool
-        if self.demoSwitchBool:
-            self.messageLineEdit.setText('Toggling demo switches')
-            self.switches[int(self.demoConfig['DEMO']['attenuator_switch_index'])].toggle_all()
-        else:
-            index = self.demoAttenuationIndex % len(self.demoAttenuationList)
-            attenuation = self.demoAttenuationList[index]
-            self.messageLineEdit.setText(f'Setting attenuation to {attenuation} dB')
-            self.attenuator024.attenuation = attenuation
-            self.attenuator625.attenuation = attenuation
-            self.demoAttenuationIndex += 1
 
 
 if __name__ == '__main__':

@@ -1,11 +1,7 @@
 import sys
 import os
 
-from configparser import ConfigParser
-
 from qtpy import QtCore, QtWidgets, QtGui
-
-from flann.vi.attenuator import Attenuator024, Attenuator625
         
 
 class MainWindow(QtWidgets.QWidget):
@@ -14,13 +10,21 @@ class MainWindow(QtWidgets.QWidget):
         super().__init__(*args, **kwargs)
 
         self._version = '2.0.0'
-
-        self.setWindowTitle(f"Attenuator {self._version}")
-        self.setWindowIcon(QtGui.QIcon(os.path.abspath(os.path.join(basedir, ".\\Icons\\FlannMicrowave.ico"))))
+        
+        self.setWindowIcon(QtGui.QIcon(os.path.abspath(os.path.join(basedir, ".\\Icons\\Attenuator.ico"))))
         self.setFixedSize(QtCore.QSize(260, 300))
         self.setStyleSheet("background-color: rgb(132, 181, 141)")
 
         self.attenuator = attenuator
+
+        if self.attenuator is not None:
+            name = self.attenuator.id()
+            if "024" in name:
+                self.setWindowTitle(f"024 - {self._version}")
+            elif "625" in name:
+                self.setWindowTitle(f"625 - {self._version}")
+        else:
+            self.setWindowTitle(f"Attenuator {self._version}")
 
         self.layoutMain = QtWidgets.QVBoxLayout()
 
