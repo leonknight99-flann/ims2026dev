@@ -32,7 +32,7 @@ class MenuWindow(QtWidgets.QWidget):
         self.parser = ConfigParser()
         self.parser.read(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\attenuatorSettings.ini")))
         self.config = self.parser['GENERAL']
-
+        
         '''User Interface'''
 
         self.layoutMain = QtWidgets.QVBoxLayout()

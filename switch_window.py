@@ -13,7 +13,7 @@ class MainWindow(QtWidgets.QWidget):
         self._version = '1.0.0'
 
         self.setWindowTitle(f"Switch {self._version}")
-        self.setWindowIcon(QtGui.QIcon(os.path.abspath(os.path.join(basedir, ".\\Icons\\FlannMicrowave.ico"))))
+        self.setWindowIcon(QtGui.QIcon(os.path.abspath(os.path.join(basedir, ".\\icons\\FlannMicrowave.ico"))))
         self.setFixedWidth(400)
         self.setStyleSheet("background-color: rgb(132, 181, 141)")
 

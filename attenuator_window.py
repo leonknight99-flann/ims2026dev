@@ -11,7 +11,7 @@ class MainWindow(QtWidgets.QWidget):
 
         self._version = '2.0.0'
         
-        self.setWindowIcon(QtGui.QIcon(os.path.abspath(os.path.join(basedir, ".\\Icons\\Attenuator.ico"))))
+        self.setWindowIcon(QtGui.QIcon(os.path.abspath(os.path.join(basedir, ".\\icons\\Attenuator.ico"))))
         self.setFixedSize(QtCore.QSize(260, 300))
         self.setStyleSheet("background-color: rgb(132, 181, 141)")
 
@@ -162,9 +162,9 @@ class MainWindow(QtWidgets.QWidget):
                 self.attenReadLineEdit.setText('dB Error')
 
     def increment_attenuation(self):
-        increment = float(self.read_attenuation_entry())
-        print(f"Increment: {increment}")
         try:
+            increment = float(self.read_attenuation_entry())
+            print(f"Increment: {increment}")
             self.attenuator.increment_store = increment  # set the increment value
             self.attenuator.increment_store()
             self.attenuator.increment()  # increment the attenuation
@@ -174,9 +174,9 @@ class MainWindow(QtWidgets.QWidget):
             self.attenReadLineEdit.setText('dB Error')
 
     def decrement_attenuation(self):
-        decrement = float(self.read_attenuation_entry())
-        print(f"Decrement: {decrement}")
         try:
+            decrement = float(self.read_attenuation_entry())
+            print(f"Decrement: {decrement}")
             self.attenuator.increment_store = decrement
             self.attenuator.increment_store()
             self.attenuator.decrement()  # decrement the attenuation
