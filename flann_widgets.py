@@ -17,47 +17,68 @@ def create_button_stylesheet(icon_path):
     """
 
 class Attenuator024Button(QtWidgets.QPushButton):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, basedir):#, *args, **kwargs):
+        super().__init__()#*args, **kwargs)
 
-        self.setStyleSheet(create_button_stylesheet("./Icons/Attenuator024.png"))
-        self.setIconSize(QtCore.QSize(80, 80))
-        self.setMinimumSize(QtCore.QSize(120, 120))
-        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-    
-    def hasHeightForWidth(self):
-        return True
-    
-    def heightForWidth(self, width):
-        return width  # Maintain square aspect ratio
+        self.ratio = 1024/1024
+        minWidth = 120
+        icon_path = os.path.join(basedir, 'icons', 'Attenuator024.png').replace('\\', '/')
+        self.setStyleSheet(create_button_stylesheet(icon_path))
+        self.setMinimumSize(QtCore.QSize(minWidth, int(minWidth / self.ratio)))
+
+    def resizeEvent(self, event):
+        w = self.width()
+        h = int(w / self.ratio)
+        self.setFixedHeight(h)
+        super().resizeEvent(event)
+
 
 class Attenuator625Button(QtWidgets.QPushButton):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, basedir):#, *args, **kwargs):
+        super().__init__()#*args, **kwargs)
 
-        self.setStyleSheet(create_button_stylesheet("./Icons/Attenuator625.png"))
-        self.setIconSize(QtCore.QSize(80, 80))
-        self.setMinimumSize(QtCore.QSize(120, 120))
-        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-    
-    def hasHeightForWidth(self):
-        return True
-    
-    def heightForWidth(self, width):
-        return width  # Maintain square aspect ratio
+        self.ratio = 1536/1024
+        minWidth = 160
+        icon_path = os.path.join(basedir, 'icons', 'Attenuator625.png').replace('\\', '/')
+        self.setStyleSheet(create_button_stylesheet(icon_path))
+        self.setMinimumSize(QtCore.QSize(minWidth, int(minWidth / self.ratio)))
+
+    def resizeEvent(self, event):
+        w = self.width()
+        h = int(w / self.ratio)
+        self.setFixedHeight(h)
+        super().resizeEvent(event)
 
 
 class Switch337Button(QtWidgets.QPushButton):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, basedir):#, *args, **kwargs):
+        super().__init__()#*args, **kwargs)
 
-        self.setStyleSheet(create_button_stylesheet("./Icons/Switch337.png"))
-        self.setIconSize(QtCore.QSize(80, 80))
-        self.setMinimumSize(QtCore.QSize(100, 120))
-        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-    
-    def hasHeightForWidth(self):
-        return True
-    
-    def heightForWidth(self, width):
-        return int(width * 1.2)  # Maintain 1.2 aspect ratio
+        self.ratio = 1024/1536
+        minWidth = 80
+        icon_path = os.path.join(basedir, 'icons', 'Switch337.png').replace('\\', '/')
+        self.setStyleSheet(create_button_stylesheet(icon_path))
+        self.setMinimumSize(QtCore.QSize(minWidth, int(minWidth / self.ratio)))
+
+    def resizeEvent(self, event):
+        w = self.width()
+        h = int(w / self.ratio)
+        self.setFixedHeight(h)
+        super().resizeEvent(event)
+
+
+class Horn240Button(QtWidgets.QPushButton):
+    def __init__(self, basedir):#, *args, **kwargs):
+        super().__init__()#*args, **kwargs)
+
+        self.ratio = 1536/1024
+        minWidth = 80
+        icon_path = os.path.join(basedir, 'icons', 'Horn240.png').replace('\\', '/')
+        self.setStyleSheet(create_button_stylesheet(icon_path))
+        # self.setMinimumSize(QtCore.QSize(minWidth, int(minWidth / self.ratio)))
+
+    def resizeEvent(self, event):
+        w = self.width()
+        h = int(w / self.ratio)
+        self.setFixedHeight(h)
+        super().resizeEvent(event)
