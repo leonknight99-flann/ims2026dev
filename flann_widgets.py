@@ -75,7 +75,24 @@ class Horn240Button(QtWidgets.QPushButton):
         minWidth = 80
         icon_path = os.path.join(basedir, 'icons', 'Horn240.png').replace('\\', '/')
         self.setStyleSheet(create_button_stylesheet(icon_path))
-        # self.setMinimumSize(QtCore.QSize(minWidth, int(minWidth / self.ratio)))
+        self.setMinimumSize(QtCore.QSize(minWidth, int(minWidth / self.ratio)))
+
+    def resizeEvent(self, event):
+        w = self.width()
+        h = int(w / self.ratio)
+        self.setFixedHeight(h)
+        super().resizeEvent(event)
+
+
+class Waveguide562Button(QtWidgets.QPushButton):
+    def __init__(self, basedir):#, *args, **kwargs):
+        super().__init__()#*args, **kwargs)
+
+        self.ratio = 1536/1024
+        minWidth = 80
+        icon_path = os.path.join(basedir, 'icons', '29562-90deg.png').replace('\\', '/')
+        self.setStyleSheet(create_button_stylesheet(icon_path))
+        self.setMinimumSize(QtCore.QSize(minWidth, int(minWidth / self.ratio)))
 
     def resizeEvent(self, event):
         w = self.width()

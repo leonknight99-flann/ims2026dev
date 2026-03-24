@@ -2,10 +2,12 @@
 import os
 import sys
 
-from flann_widgets import Attenuator024Button, Attenuator625Button, Switch337Button, Horn240Button
-
+from flann_widgets import Attenuator024Button, Attenuator625Button, Switch337Button, Horn240Button, Waveguide562Button
 from attenuator_window import MainWindow as AttenuatorWindow
 from switch_window import MainWindow as SwitchWindow
+
+from flann.vi.attenuator import Attenuator024, Attenuator625
+from flann.vi.switch import Switch337
 
 from qtpy import QtCore, QtWidgets, QtGui
 
@@ -23,9 +25,11 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.setWindowTitle("Flann IMS 2026")
         self.setWindowIcon(QtGui.QIcon(os.path.abspath(os.path.join(basedir, ".\\icons\\FlannMicrowave.ico"))))
 
-        self.instruments = [None, None, None]  # Placeholder for 3 instruments
+        self.attenuator625 = None
+        self.attenuator024 = None
+        self.switch = None
 
-        self.create_sub_windows()
+        self.create_sub_windows(self.attenuator024, self.attenuator625, self.switch)
 
         self.centralWidget = QtWidgets.QWidget()
         self.centralWidget.setStyleSheet("background-color: rgb(0, 58, 34)")
@@ -56,10 +60,10 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         help_menu = menu_bar.addMenu("Help")
         help_menu.addAction("About", self.about_message)
 
-    def create_sub_windows(self, instruments):
-        self.attenuator024_window = AttenuatorWindow(None, basedir)
-        self.attenuator625_window = AttenuatorWindow(None, basedir)
-        self.switch_window = SwitchWindow(None, basedir)
+    def create_sub_windows(self, atten024=None, atten625=None, switch=None):
+        self.attenuator024_window = AttenuatorWindow(atten024, basedir)
+        self.attenuator625_window = AttenuatorWindow(atten625, basedir)
+        self.switch_window = SwitchWindow(switch, basedir)
         self.connection_manager = ConnectionManager()
 
     def create_main_layout(self):      
@@ -124,11 +128,38 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
     def connect_to_instrument(self):
         # Placeholder for connection logic
+        baudrate = int(self.connection_manager.baudrate_lineEdit.text())
+        timeout = float(self.connection_manager.timeout_lineEdit.text())
+        tcp_port = int(self.connection_manager.tcp_port_lineEdit.text())
+        sleep = float(self.connection_manager.sleep_lineEdit.text())
+
         if self.device_connect.isChecked():
-            print("Connecting to instrument...")
+            address_list = [self.connection_manager.instrument_comboBox[i].currentText().upper() for i in range(len(self.connection_manager.instrument_comboBox))]
+            print(f"Connecting to instruments at: {address_list}")
+            port_dictionary = {port.name: port.description.lower() for port in list_ports.comports()}
+            for address in address_list:
+                if address.startswith("COM") and 'silicon labs' in port_dictionary.get(address):
+                    print(f"Found {address} at {port_dictionary.get(address)}")
+                    print(f"Attempting to connect to 024 {address} via serial...")
+                    self.attenuator024 = Attenuator024(address, baudrate, timeout, sleep)
+                elif address.startswith("COM") and 'silicon labs' not in port_dictionary.get(address):
+                    print(f"Attempting to connect to 337 {address} via serial...")
+                else:
+                    print(f"Attempting to connect to {address} via TCP/IP...")
+                    self.attenuator625 = Attenuator625(address, tcp_port, sleep)
         elif not self.device_connect.isChecked():
             print("Disconnecting from instrument...")
-        
+            if self.attenuator024:
+                self.attenuator024.close()
+            if self.attenuator625:
+                self.attenuator625.close()
+            if self.switch:
+                self.switch.close()
+            self.attenuator024 = None
+            self.attenuator625 = None
+            self.switch = None
+
+        self.create_sub_windows(self.attenuator024, self.attenuator625, self.switch)  # Recreate sub-windows with updated instrument connections
 
 
 class ConnectionManager(QtWidgets.QWidget):
@@ -208,7 +239,7 @@ class ConnectionManager(QtWidgets.QWidget):
 
     def refresh_instrument_list(self, parser):
         ports = list_ports.comports()
-        port_names = [port.device for port in ports]
+        port_names = [port.device.upper() for port in ports]
         port_names.append(parser['INSTRUMENT1']['address'])  # Add previously instruments to the list
         port_names.append(parser['INSTRUMENT2']['address'])
         port_names.append(parser['INSTRUMENT3']['address'])
