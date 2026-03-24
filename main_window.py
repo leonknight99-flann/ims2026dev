@@ -2,7 +2,7 @@
 import os
 import sys
 
-from flann_widgets import Attenuator024Button, Attenuator625Button, Switch337Button, Horn240Button, Waveguide562Button
+from flann_widgets import Attenuator024Button, Attenuator625Button, Switch337Button, Horn240Button, Waveguide562PathButton
 from attenuator_window import MainWindow as AttenuatorWindow
 from switch_window import MainWindow as SwitchWindow
 
@@ -77,15 +77,18 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         attenuator2.clicked.connect(lambda: self.toggle_child_window(self.attenuator625_window))
         horn1 = Horn240Button(basedir)
         horn2 = Horn240Button(basedir)
+        waveguide = Waveguide562PathButton(basedir)
+        waveguide.clicked.connect(lambda: self.switch_window.toggle_all_switches())
         
         grid_layout = QtWidgets.QGridLayout()
         
         grid_layout.addWidget(horn1, 0, 1)
-        grid_layout.addWidget(horn2, 0, 2)
+        grid_layout.addWidget(horn2, 0, 3)
         grid_layout.addWidget(switch1, 1, 0)
-        grid_layout.addWidget(switch2, 1, 3)
+        grid_layout.addWidget(waveguide, 1, 2)
+        grid_layout.addWidget(switch2, 1, 4)
         grid_layout.addWidget(attenuator1, 2, 1)
-        grid_layout.addWidget(attenuator2, 2, 2)
+        grid_layout.addWidget(attenuator2, 2, 3)
 
         main_widget = QtWidgets.QWidget()
         main_widget.setStyleSheet("background-color: white; border-radius: 5px; margin: 10px;")

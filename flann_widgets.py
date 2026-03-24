@@ -99,3 +99,52 @@ class Waveguide562Button(QtWidgets.QPushButton):
         h = int(w / self.ratio)
         self.setFixedHeight(h)
         super().resizeEvent(event)
+
+class Waveguide562ArrowButton(QtWidgets.QPushButton):
+    def __init__(self, basedir):#, *args, **kwargs):
+        super().__init__()#*args, **kwargs)
+
+        self.ratio = 1536/1024
+        minWidth = 80
+        icon_path = os.path.join(basedir, 'icons', '29562-90degArrow.png').replace('\\', '/')
+        self.setStyleSheet(create_button_stylesheet(icon_path))
+        self.setMinimumSize(QtCore.QSize(minWidth, int(minWidth / self.ratio)))
+
+    def resizeEvent(self, event):
+        w = self.width()
+        h = int(w / self.ratio)
+        self.setFixedHeight(h)
+        super().resizeEvent(event)  
+
+
+class Waveguide562PathButton(QtWidgets.QPushButton):
+    def __init__(self, basedir):#, *args, **kwargs):
+        super().__init__()#*args, **kwargs)
+
+        self.setCheckable(True)
+
+        self.ratio = 1536/1024
+        minWidth = 80
+        icon1_path = os.path.join(basedir, 'icons', '29562-90deg-path1.png').replace('\\', '/')
+        icon2_path = os.path.join(basedir, 'icons', '29562-90deg-path2.png').replace('\\', '/')
+        self.setStyleSheet(f"""
+                            QPushButton {{
+                                border-image: url({icon1_path});
+                                background-repeat: no-repeat;
+                                background-position: center;
+                            }}
+                            QPushButton:pressed {{
+                                border: 5px solid white;
+                            }}
+                            QPushButton:checked {{
+                                border-image: url({icon2_path});
+                            }}
+                            """)
+        self.setMinimumSize(QtCore.QSize(minWidth, int(minWidth / self.ratio)))
+
+    def resizeEvent(self, event):
+        w = self.width()
+        h = int(w / self.ratio)
+        self.setFixedHeight(h)
+        super().resizeEvent(event)
+
