@@ -27,9 +27,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         self.attenuator625 = None
         self.attenuator024 = None
-        self.switch = None
+        self.switches = []
 
-        self.create_sub_windows(self.attenuator024, self.attenuator625, self.switch)
+        self.create_sub_windows(self.attenuator024, self.attenuator625, self.switches)
 
         self.centralWidget = QtWidgets.QWidget()
         self.centralWidget.setStyleSheet("background-color: rgb(0, 58, 34)")
@@ -110,6 +110,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
     def closeEvent(self, event):
         self.update_parser()  # Save settings to INI file
+        self.disconnect_instrument()  # Ensure instruments are disconnected
         QtWidgets.QApplication.closeAllWindows()
 
     def update_parser(self):
@@ -127,7 +128,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         update_file.close()
 
     def connect_to_instrument(self):
-        # Placeholder for connection logic
         baudrate = int(self.connection_manager.baudrate_lineEdit.text())
         timeout = float(self.connection_manager.timeout_lineEdit.text())
         tcp_port = int(self.connection_manager.tcp_port_lineEdit.text())
@@ -137,29 +137,37 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             address_list = [self.connection_manager.instrument_comboBox[i].currentText().upper() for i in range(len(self.connection_manager.instrument_comboBox))]
             print(f"Connecting to instruments at: {address_list}")
             port_dictionary = {port.name: port.description.lower() for port in list_ports.comports()}
-            for address in address_list:
-                if address.startswith("COM") and 'silicon labs' in port_dictionary.get(address):
-                    print(f"Found {address} at {port_dictionary.get(address)}")
-                    print(f"Attempting to connect to 024 {address} via serial...")
-                    self.attenuator024 = Attenuator024(address, baudrate, timeout, sleep)
-                elif address.startswith("COM") and 'silicon labs' not in port_dictionary.get(address):
-                    print(f"Attempting to connect to 337 {address} via serial...")
-                else:
-                    print(f"Attempting to connect to {address} via TCP/IP...")
-                    self.attenuator625 = Attenuator625(address, tcp_port, sleep)
+            try:
+                for address in address_list:
+                    if address.startswith("COM") and 'silicon labs' in port_dictionary.get(address):
+                        print(f"Found {address} at {port_dictionary.get(address)}")
+                        print(f"Attempting to connect to 024 {address} via serial...")
+                        self.attenuator024 = Attenuator024(address, baudrate=baudrate, timeout=timeout, timedelay=sleep)
+                    elif address.startswith("COM") and 'silicon labs' not in port_dictionary.get(address):
+                        print(f"Attempting to connect to 337 {address} via serial...")
+                        self.switches.append(Switch337(1, address=address, baudrate=baudrate, timeout=timeout, timedelay=sleep))
+                    else:
+                        print(f"Attempting to connect to {address} via TCP/IP...")
+                        self.attenuator625 = Attenuator625(address, tcp_port=tcp_port, timedelay=sleep)
+            except Exception as e:
+                print(f"Failed to connect to one or more instruments: {e}")
         elif not self.device_connect.isChecked():
-            print("Disconnecting from instrument...")
-            if self.attenuator024:
-                self.attenuator024.close()
-            if self.attenuator625:
-                self.attenuator625.close()
-            if self.switch:
-                self.switch.close()
-            self.attenuator024 = None
-            self.attenuator625 = None
-            self.switch = None
+            self.disconnect_instrument()
 
-        self.create_sub_windows(self.attenuator024, self.attenuator625, self.switch)  # Recreate sub-windows with updated instrument connections
+        self.create_sub_windows(self.attenuator024, self.attenuator625, self.switches)  # Recreate sub-windows with updated instrument connections
+
+    def disconnect_instrument(self):
+        print("Disconnecting from instrument...")
+        if self.attenuator024:
+            self.attenuator024.close()
+        if self.attenuator625:
+            self.attenuator625.close()
+        if self.switches:
+            for switch in self.switches:
+                switch.close()
+        self.attenuator024 = None
+        self.attenuator625 = None
+        self.switches = []
 
 
 class ConnectionManager(QtWidgets.QWidget):

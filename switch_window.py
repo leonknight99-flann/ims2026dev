@@ -7,7 +7,7 @@ from qtpy import QtCore, QtWidgets, QtGui
 
 class MainWindow(QtWidgets.QWidget):
     '''Switch Counter Main Window'''
-    def __init__(self, switches=None, basedir=None, *args, **kwargs):
+    def __init__(self, switches=[], basedir=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self._version = '1.0.0'
@@ -47,6 +47,7 @@ class MainWindow(QtWidgets.QWidget):
         ## Layout 2
         self.layout2 = QtWidgets.QGridLayout()
         self.switchButtonMap = {} 
+        self.generate_window()
 
         '''Layout'''
 
@@ -66,7 +67,7 @@ class MainWindow(QtWidgets.QWidget):
         switchButtonLabels = [['Toggle\n1', 'Toggle\n2', 'Toggle\nBoth'],] * len(self.switches)
 
         for s in range(len(self.switches)):
-            switchLabel = QtWidgets.QTextEdit(f'{self.switches_names[s]}')
+            switchLabel = QtWidgets.QTextEdit(f'{self.switches[s].id()}')
             switchLabel.setReadOnly(True)  # Read-only
             switchLabel.setStyleSheet("QTextEdit {background-color:white; color:black; border: 0px; border-radius:2px}")
             switchLabel.setFixedSize(QtCore.QSize(100, 40))
@@ -84,7 +85,7 @@ class MainWindow(QtWidgets.QWidget):
                     self.switchButtonMap[f'{row}'+key].clicked.connect(lambda _, row=row: self.toggle_selected_switch(row, 2))
                 elif key == 'Toggle\nBoth':
                     self.switchButtonMap[f'{row}'+key].clicked.connect(lambda _, row=row: self.switches[row].toggle_all())
-                    self.switchButtonMap[f'{row}'+key].clicked.connect(lambda _, row=row: self.messageLineEdit.setText(f'Toggling {self.switches_names[row]} Switch 1 and 2'))
+                    self.switchButtonMap[f'{row}'+key].clicked.connect(lambda _, row=row: self.messageLineEdit.setText(f'Toggling {self.switches[row].id()} Switch 1 and 2'))
                 self.layout2.addWidget(self.switchButtonMap[f'{row}'+key], row, col+1)
 
     def toggle_selected_switch(self, switch_driver_number, switch_number):
@@ -92,7 +93,7 @@ class MainWindow(QtWidgets.QWidget):
             selected_switch = self.switches[switch_driver_number]
             selected_switch.switch = switch_number
             selected_switch.toggle()
-            self.messageLineEdit.setText(f'Toggling {self.switches_names[switch_driver_number]} Switch {switch_number}')
+            self.messageLineEdit.setText(f'Toggling {self.switches[switch_driver_number].id()} Switch {switch_number}')
         else:
             self.messageLineEdit.setText('No switches connected.')
 
