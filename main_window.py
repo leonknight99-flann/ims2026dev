@@ -25,6 +25,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         self.setWindowTitle("Flann IMS 2026")
         self.setWindowIcon(QtGui.QIcon(os.path.abspath(os.path.join(basedir, ".\\icons\\FlannMicrowave.ico"))))
+        self.setFixedSize(QtCore.QSize(1600, 1100))
 
         self.attenuator625 = None
         self.attenuator024 = None
