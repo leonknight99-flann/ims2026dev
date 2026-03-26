@@ -57,9 +57,9 @@ class MainWindow(QtWidgets.QWidget):
         self.positionToggle = QtWidgets.QPushButton("Set\nPosition")
         self.positionToggle.setCheckable(True)
         self.positionToggle.setStyleSheet("""
-            QPushButton { background-color: rgb(247, 236, 223); }
-            QPushButton:checked { background-color: rgb(0, 140, 124); }
-        """)        
+                                          QPushButton { background-color: rgb(247, 236, 223); }
+                                          QPushButton:checked { background-color: rgb(0, 140, 124); }
+                                          """)        
         
         # Layout 2
         self.layout2 = QtWidgets.QHBoxLayout()
