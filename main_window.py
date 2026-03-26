@@ -30,6 +30,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.switches = []
 
         self.create_sub_windows(self.attenuator024, self.attenuator625, self.switches)
+        self.demo_window = None
 
         self.centralWidget = QtWidgets.QWidget()
         self.centralWidget.setStyleSheet("background-color: rgb(0, 58, 34)")
@@ -43,7 +44,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         menu_bar = self.menuBar()
 
         file_menu = menu_bar.addMenu("File")
-        file_menu.addAction("Run Demo")
+        file_menu.addAction("Demo", lambda: self.create_demo_window())
         file_menu.addAction("Exit", self.close)
 
         connect_menu = menu_bar.addMenu("Connections")
@@ -65,6 +66,15 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.attenuator625_window = AttenuatorWindow(atten625, basedir)
         self.switch_window = SwitchWindow(switch, basedir)
         self.connection_manager = ConnectionManager()
+
+    def create_demo_window(self):
+        attenuator_list = [self.attenuator024, self.attenuator625]
+        if self.demo_window is not None:
+            self.demo_window.close()
+            self.demo_window = None
+        elif self.demo_window is None:
+            self.demo_window = DemoWindow(attenuator_list)
+            self.demo_window.show()
 
     def create_main_layout(self):      
         switch1 = Switch337Button(basedir)
@@ -256,7 +266,74 @@ class ConnectionManager(QtWidgets.QWidget):
         port_names.append(parser['INSTRUMENT3']['address'])
 
         return list(set(port_names))
+    
 
+class DemoWindow(QtWidgets.QWidget):
+    def __init__(self, attenuator_list=[], *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.setWindowTitle("Demo Window")
+        self.setWindowIcon(QtGui.QIcon(os.path.abspath(os.path.join(basedir, ".\\icons\\FlannMicrowave.ico"))))
+        self.setStyleSheet("background-color: rgb(132, 181, 141)")
+
+        self.attenuator_list = attenuator_list
+        self.chosen_attenuator = None
+
+        self.layout_main = QtWidgets.QVBoxLayout()
+
+        self.create_main_layout()
+
+        self.setLayout(self.layout_main)
+
+    def create_main_layout(self):
+        parser = ConfigParser()
+        parser.read(os.path.join(basedir, "settings.ini"))
+
+        attenuator_layout = QtWidgets.QHBoxLayout()
+        attenuator_layout.addWidget(QtWidgets.QLabel("Attenuator:"), stretch=1)
+        self.attenuator_comboBox = QtWidgets.QComboBox()
+        self.attenuator_comboBox.addItems([str(type(a)) for a in self.attenuator_list])
+        self.attenuator_comboBox.setStyleSheet("background-color: white; border-radius: 5px; padding: 5px;")
+        attenuator_layout.addWidget(self.attenuator_comboBox, stretch=3)
+
+        x_axis_layout = QtWidgets.QHBoxLayout()
+        x_axis_layout.addWidget(QtWidgets.QLabel("VNA Sweep\nTime (s):"))
+        self.vna_sweep_time_lineEdit  = QtWidgets.QLineEdit()
+        self.vna_sweep_time_lineEdit.setStyleSheet("background-color: white; border-radius: 5px; padding: 5px;")
+        self.vna_sweep_time_lineEdit.setText(parser['DEMO']['vna_sTime'])
+        x_axis_layout.addWidget(self.vna_sweep_time_lineEdit)
+        x_axis_layout.addWidget(QtWidgets.QLabel("VNA Sweep\nPoints:"))
+        self.vna_sweep_points_lineEdit  = QtWidgets.QLineEdit()
+        self.vna_sweep_points_lineEdit.setStyleSheet("background-color: white; border-radius: 5px; padding: 5px;")
+        self.vna_sweep_points_lineEdit.setText(parser['DEMO']['vna_nPoints'])
+        x_axis_layout.addWidget(self.vna_sweep_points_lineEdit)
+
+        y_axis_layout = QtWidgets.QHBoxLayout()
+        y_axis_layout.addWidget(QtWidgets.QLabel("Max (dB):"))
+        self.attenuator_max_lineEdit = QtWidgets.QLineEdit()
+        self.attenuator_max_lineEdit.setStyleSheet("background-color: white; border-radius: 5px; padding: 5px;")
+        self.attenuator_max_lineEdit.setText(parser['DEMO']['max_attenuation'])
+        y_axis_layout.addWidget(self.attenuator_max_lineEdit)
+        y_axis_layout.addWidget(QtWidgets.QLabel("Min (dB):"))
+        self.attenuator_min_lineEdit = QtWidgets.QLineEdit()
+        self.attenuator_min_lineEdit.setStyleSheet("background-color: white; border-radius: 5px; padding: 5px;")
+        self.attenuator_min_lineEdit.setText(parser['DEMO']['min_attenuation'])
+        y_axis_layout.addWidget(self.attenuator_min_lineEdit)
+        
+        demo_button = QtWidgets.QPushButton("Run Demo")
+        demo_button.setStyleSheet("background-color: white; border-radius: 5px; padding: 10px; pressed {background-color: rgb(247, 236, 223); border: 5px solid white;}")
+
+        main_widget = QtWidgets.QWidget()
+        main_widget.setStyleSheet("background-color: rgb(247, 236, 223); border-radius: 5px; margin: 10px;")
+
+        main_layout = QtWidgets.QVBoxLayout()
+        main_layout.addLayout(attenuator_layout)
+        main_layout.addLayout(x_axis_layout)
+        main_layout.addLayout(y_axis_layout)
+        main_layout.addWidget(demo_button)
+
+        main_widget.setLayout(main_layout)
+        self.layout_main.addWidget(main_widget)
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
