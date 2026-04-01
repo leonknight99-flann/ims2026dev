@@ -185,12 +185,4 @@ class MainWindow(QtWidgets.QWidget):
             print("Error decrementing attenuation")
             self.attenReadLineEdit.setText('dB Error')
             
-
-if __name__ == '__main__':
-    app = QtWidgets.QApplication(sys.argv)
-    app.setStyle('Fusion')
-    window = MainWindow(None, os.path.dirname(__file__))
-    window.setWindowFlag(QtCore.Qt.CustomizeWindowHint, True)
-    window.show()
-
-    app.exec()
+            

@@ -129,11 +129,3 @@ class MainWindow(QtWidgets.QWidget):
             if item.widget() is not None:
                 item.widget().deleteLater()
 
-
-if __name__ == '__main__':
-    app = QtWidgets.QApplication(sys.argv)
-    app.setStyle('Fusion')
-    window = MainWindow(switches=None, basedir=os.path.dirname(__file__))
-    window.show()
-
-    app.exec()

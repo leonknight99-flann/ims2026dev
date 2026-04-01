@@ -1,7 +1,7 @@
 
 import os
 
-from qtpy import QtCore, QtWidgets, QtGui
+from qtpy import QtCore, QtWidgets
 
 def create_button_stylesheet(icon_path):
     """Create a stylesheet for a button with the given icon path."""
@@ -72,7 +72,7 @@ class Horn240Button(QtWidgets.QPushButton):
         super().__init__()#*args, **kwargs)
 
         self.ratio = 1536/1024
-        minWidth = 160
+        minWidth = 240
         icon_path = os.path.join(basedir, 'icons', 'Horn240.png').replace('\\', '/')
         self.setStyleSheet(create_button_stylesheet(icon_path))
         self.setMinimumSize(QtCore.QSize(minWidth, int(minWidth / self.ratio)))
