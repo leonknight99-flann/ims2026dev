@@ -28,13 +28,14 @@ class MainWindow(QtWidgets.QWidget):
         self.trace_array = None
         self.create_trace_image()
 
-        self.timer = QtCore.QTimer(self)  # Timer for demo
-        self.timer.timeout.connect(self.running_demo)
+        # Demo
+        self.demo_timer = QtCore.QTimer(self)  # Timer for demo
+        self.demo_timer.timeout.connect(self.running_demo)
+        self.demo_index = 0
 
+        # Create Layout
         self.layout_main = QtWidgets.QVBoxLayout()
-
         self.create_main_layout()
-
         self.setLayout(self.layout_main)
 
     def create_trace_image(self):
@@ -175,25 +176,38 @@ class MainWindow(QtWidgets.QWidget):
         array[:, 1] = np.round(((array[:, 1] - np.min(array[:, 1])) * attenuation_range / np.ptp(array[:, 1])) + min_attenuation, 1)
         np.savetxt(image+'.csv', array, delimiter=',')
 
-        print(array)
+        print(array.shape)
 
         self.trace_array = array
 
     def demo(self):
-        if self.demo_button.isChecked() and isinstance(self.attenuator_list[self.attenuator_comboBox.currentIndex()], (Attenuator024, Attenuator625)):
+        self.chosen_attenuator = self.attenuator_list[self.attenuator_comboBox.currentIndex()]
+        if all([self.demo_button.isChecked(), isinstance(self.chosen_attenuator, (Attenuator024, Attenuator625)), self.trace_array is not None]):
             self.demo_button.setText("Stop")
-        elif not self.demo_button.isChecked() and isinstance(self.attenuator_list[self.attenuator_comboBox.currentIndex()], (Attenuator024, Attenuator625)):
+            self.demo_timer.start(1000)  # Default 1s initial time delay
+            
+        elif all([not self.demo_button.isChecked(), isinstance(self.chosen_attenuator, (Attenuator024, Attenuator625)), self.trace_array is not None]):
+            self.demo_timer.stop()
             self.demo_button.setText("Run Demo")
+            self.chosen_attenuator = None
         else:
-            print('incorrect class')
+            print('incorrect class or no file loaded')
             self.demo_button.setChecked(False)
             self.demo_button.setText("Run Demo")
+            self.chosen_attenuator = None
 
     def running_demo(self):
-        selected_attenuator = self.attenuator_list[self.attenuator_comboBox.currentIndex()]
-        print(selected_attenuator)
-        return
-
+        if self.demo_index == self.trace_array.shape[0]:
+            self.demo_index = 0
+            self.demo_timer.setInterval(1000)
+        else:
+            time_delay = (self.trace_array[self.demo_index, 0] - self.trace_array[self.demo_index - 1, 0]) * 1000
+            print(time_delay)
+            self.demo_timer.setInterval(time_delay)
+        self.chosen_attenuator.attenuation = self.trace_array[self.demo_index, 1]
+        
+        self.demo_index += 1
+        
 
 test_atten = Attenuator625(address='10.200.1.9', timedelay=0.1, tcp_port=10001)
 print(test_atten.id())
