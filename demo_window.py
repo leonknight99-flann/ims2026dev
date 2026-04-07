@@ -202,14 +202,15 @@ class MainWindow(QtWidgets.QWidget):
             self.demo_timer.setInterval(1000)
         else:
             time_delay = (self.trace_array[self.demo_index, 0] - self.trace_array[self.demo_index - 1, 0]) * 1000
-            print(time_delay)
             self.demo_timer.setInterval(time_delay)
+        print(self.trace_array[self.demo_index, 1], time_delay)
         self.chosen_attenuator.attenuation = self.trace_array[self.demo_index, 1]
         
         self.demo_index += 1
         
 
-test_atten = Attenuator625(address='10.200.1.9', timedelay=0.1, tcp_port=10001)
+# test_atten = Attenuator625(address='10.200.1.9', timedelay=0.1, tcp_port=10001)
+test_atten = Attenuator024('COM3', timedelay=0, timeout=0.44, baudrate=31250)
 print(test_atten.id())
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
