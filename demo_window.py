@@ -31,7 +31,6 @@ class MainWindow(QtWidgets.QWidget):
         # Demo
         self.demo_timer = QtCore.QTimer(self)  # Timer for demo
         self.demo_timer.timeout.connect(self.running_demo)
-        self.demo_index = 0
 
         # Create Layout
         self.layout_main = QtWidgets.QVBoxLayout()
@@ -42,6 +41,8 @@ class MainWindow(QtWidgets.QWidget):
         self.trace_image = pg.PlotWidget()
         self.trace_image.setBackground((132, 181, 141))
         self.trace_image.showGrid(x=True, y=True)
+        self.trace_image.setLabel('left', 'Attenuation (dB)')
+        self.trace_image.setLabel('bottom', 'Time (s)')
         for axis in ['left', 'bottom', 'right', 'top']:
             ax = self.trace_image.getAxis(axis)
             ax.setPen('w')
@@ -59,14 +60,17 @@ class MainWindow(QtWidgets.QWidget):
 
         x_axis_layout = QtWidgets.QHBoxLayout()
         x_axis_layout.addWidget(QtWidgets.QLabel("VNA Sweep\nTime (s):"))
-        self.vna_sweep_time_lineEdit  = QtWidgets.QLineEdit()
+        self.vna_sweep_time_lineEdit = QtWidgets.QLineEdit()
         self.vna_sweep_time_lineEdit.setStyleSheet("background-color: white;")
         self.vna_sweep_time_lineEdit.setText(parser['DEMO']['vna_sTime'])
+        self.vna_sweep_time_lineEdit.setValidator(QtGui.QDoubleValidator())
         x_axis_layout.addWidget(self.vna_sweep_time_lineEdit)
         x_axis_layout.addWidget(QtWidgets.QLabel("VNA Sweep\nPoints:"))
-        self.vna_sweep_points_lineEdit  = QtWidgets.QLineEdit()
+        self.vna_sweep_points_lineEdit = QtWidgets.QLineEdit()
         self.vna_sweep_points_lineEdit.setStyleSheet("background-color: white;")
         self.vna_sweep_points_lineEdit.setText(parser['DEMO']['vna_nPoints'])
+        self.vna_sweep_points_lineEdit.setReadOnly(True)
+        self.vna_sweep_points_lineEdit.setValidator(QtGui.QIntValidator())
         x_axis_layout.addWidget(self.vna_sweep_points_lineEdit)
 
         y_axis_layout = QtWidgets.QHBoxLayout()
@@ -147,6 +151,8 @@ class MainWindow(QtWidgets.QWidget):
         self.trace_image.clear()
         self.lineImage_to_array(self.trace_file_path)
         self.trace_image.plot(self.trace_array[:, 0], self.trace_array[:, 1], pen=pen)
+        self.vna_sweep_points_lineEdit.setText(f'1: {self.trace_array.shape[0]*1}, 2: {self.trace_array.shape[0]*2}, '
+                                               f'3: {self.trace_array.shape[0]*3}, 4: {self.trace_array.shape[0]*4}')
 
     def lineImage_to_array(self, image):
         self.trace_array = None
@@ -182,6 +188,7 @@ class MainWindow(QtWidgets.QWidget):
 
     def demo(self):
         self.chosen_attenuator = self.attenuator_list[self.attenuator_comboBox.currentIndex()]
+        self.demo_index = 0
         if all([self.demo_button.isChecked(), isinstance(self.chosen_attenuator, (Attenuator024, Attenuator625)), self.trace_array is not None]):
             self.demo_button.setText("Stop")
             self.demo_timer.start(1000)  # Default 1s initial time delay
@@ -209,8 +216,8 @@ class MainWindow(QtWidgets.QWidget):
         self.demo_index += 1
         
 
-# test_atten = Attenuator625(address='10.200.1.9', timedelay=0.1, tcp_port=10001)
-test_atten = Attenuator024('COM3', timedelay=0, timeout=0.44, baudrate=31250)
+test_atten = Attenuator625(address='10.200.1.9', timedelay=0.1, tcp_port=10001)
+# test_atten = Attenuator024('COM3', timedelay=0, timeout=0.44, baudrate=31250)
 print(test_atten.id())
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
