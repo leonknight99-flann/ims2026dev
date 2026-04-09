@@ -241,12 +241,12 @@ class MainWindow(QtWidgets.QWidget):
         self.demo_index += 1
         
 
-test_atten = Attenuator625(address='10.200.1.9', timedelay=0.1, tcp_port=10001)
+# test_atten = Attenuator625(address='10.200.1.9', timedelay=0.1, tcp_port=10001)
 # test_atten = Attenuator024('COM3', timedelay=0, timeout=0.44, baudrate=31250)
-print(test_atten.id())
+# print(test_atten.id())
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     app.setStyle('Fusion')
-    window = MainWindow([test_atten, '1', '2'])
+    window = MainWindow(['1', '2'])
     window.show()
     app.exec_()
