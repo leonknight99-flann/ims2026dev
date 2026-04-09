@@ -66,12 +66,21 @@ class MainWindow(QtWidgets.QWidget):
         self.vna_sweep_time_lineEdit.setValidator(QtGui.QDoubleValidator())
         x_axis_layout.addWidget(self.vna_sweep_time_lineEdit)
         x_axis_layout.addWidget(QtWidgets.QLabel("VNA Sweep\nPoints:"))
+        self.vna_sweep_points_spinBox = QtWidgets.QSpinBox()
+        self.vna_sweep_points_spinBox.setRange(1, 1000)
+        self.vna_sweep_points_spinBox.valueChanged.connect(self.update_vna_sweep_points)
         self.vna_sweep_points_lineEdit = QtWidgets.QLineEdit()
         self.vna_sweep_points_lineEdit.setStyleSheet("background-color: white;")
-        self.vna_sweep_points_lineEdit.setText(parser['DEMO']['vna_nPoints'])
         self.vna_sweep_points_lineEdit.setReadOnly(True)
         self.vna_sweep_points_lineEdit.setValidator(QtGui.QIntValidator())
+        x_axis_layout.addWidget(self.vna_sweep_points_spinBox)
         x_axis_layout.addWidget(self.vna_sweep_points_lineEdit)
+        x_axis_layout.addWidget(QtWidgets.QLabel("VNA Sweep\nPadding:"))
+        self.vna_sweep_padding_lineEdit = QtWidgets.QLineEdit()
+        self.vna_sweep_padding_lineEdit.setStyleSheet("background-color: white;")
+        self.vna_sweep_padding_lineEdit.setText(parser['DEMO']['vna_sweep_padding'])
+        self.vna_sweep_padding_lineEdit.setValidator(QtGui.QIntValidator())
+        x_axis_layout.addWidget(self.vna_sweep_padding_lineEdit)
 
         y_axis_layout = QtWidgets.QHBoxLayout()
         y_axis_layout.addWidget(QtWidgets.QLabel("Max (dB):"))
@@ -94,11 +103,12 @@ class MainWindow(QtWidgets.QWidget):
         self.image_mask_lineEdit.setStyleSheet("background-color: white;")
         self.image_mask_lineEdit.setText(parser['DEMO']['mask'])
         image_selector_layout.addWidget(self.image_mask_lineEdit)
+        self.equal_time_step_checkBox = QtWidgets.QCheckBox("Equal Time Steps")
+        self.equal_time_step_checkBox.setChecked(False)
+        image_selector_layout.addWidget(self.equal_time_step_checkBox)
         image_update_button = QtWidgets.QPushButton('Update\nImage')
         image_update_button.clicked.connect(lambda: self.update_image())
         image_selector_layout.addWidget(image_update_button)
-
-        # self.target_image = 
      
         self.demo_button = QtWidgets.QPushButton("Run Demo")
         self.demo_button.setCheckable(True)
@@ -146,13 +156,18 @@ class MainWindow(QtWidgets.QWidget):
             self.trace_file_path = file_dialog.selectedFiles()[0]
             self.update_image()
 
+    def update_vna_sweep_points(self):
+        if self.trace_array is not None:
+            n_points = self.trace_array.shape[0]
+            n_sweeps = self.vna_sweep_points_spinBox.value()
+            self.vna_sweep_points_lineEdit.setText(f'{n_points*n_sweeps}')
+
     def update_image(self):
         pen = pg.mkPen(color='w')
         self.trace_image.clear()
         self.lineImage_to_array(self.trace_file_path)
-        self.trace_image.plot(self.trace_array[:, 0], self.trace_array[:, 1], pen=pen)
-        self.vna_sweep_points_lineEdit.setText(f'1: {self.trace_array.shape[0]*1}, 2: {self.trace_array.shape[0]*2}, '
-                                               f'3: {self.trace_array.shape[0]*3}, 4: {self.trace_array.shape[0]*4}')
+        self.trace_image.plot(np.cumsum(self.trace_array[:, 0]), self.trace_array[:, 1], pen=pen)
+        self.update_vna_sweep_points()
 
     def lineImage_to_array(self, image):
         self.trace_array = None
@@ -177,13 +192,23 @@ class MainWindow(QtWidgets.QWidget):
         min_attenuation = float(self.attenuator_min_lineEdit.text())
         attenuation_range = max_attenuation - min_attenuation
 
-
-        array[:, 0] = np.round((array[:, 0] - np.min(array[:, 0])) * sweep_time_range / np.max(array[:, 0]), 1)
+        array[:, 0] = array[:, 0] - np.min(array[:, 0])
         array[:, 1] = np.round(((array[:, 1] - np.min(array[:, 1])) * attenuation_range / np.ptp(array[:, 1])) + min_attenuation, 1)
+        array[:, 0] = np.insert(np.diff(array[:, 0], axis=0), 0, 1)
+
+        if self.vna_sweep_padding_lineEdit.text() != '0':
+            padding = int(self.vna_sweep_padding_lineEdit.text())
+            beginning_padding = np.tile(array[0, :], (padding, 1))
+            end_padding = np.tile(array[-1, :], (padding, 1))
+            array = np.concatenate((beginning_padding, array, end_padding), axis=0)     
+
+        if self.equal_time_step_checkBox.isChecked():
+            n_points = array.shape[0]
+            time_steps = np.ones(n_points) * (sweep_time_range / n_points)
+            array[:, 0] = time_steps
+
+        array[:, 0] = array[:, 0] * sweep_time_range / np.sum(array[:, 0])
         np.savetxt(image+'.csv', array, delimiter=',')
-
-        print(array.shape)
-
         self.trace_array = array
 
     def demo(self):
@@ -208,7 +233,7 @@ class MainWindow(QtWidgets.QWidget):
             self.demo_index = 0
             self.demo_timer.setInterval(1000)
         else:
-            time_delay = (self.trace_array[self.demo_index, 0] - self.trace_array[self.demo_index - 1, 0]) * 1000
+            time_delay = self.trace_array[self.demo_index, 0] * 1000
             self.demo_timer.setInterval(time_delay)
         print(self.trace_array[self.demo_index, 1], time_delay)
         self.chosen_attenuator.attenuation = self.trace_array[self.demo_index, 1]
