@@ -13,6 +13,17 @@ from configparser import ConfigParser
 
 basedir = os.path.dirname(__file__)
 
+class AttenuatorWorker(QtCore.QObject):
+    finished = QtCore.Signal()
+
+    def __init__(self, attenuator, attenuation, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.attenuator = attenuator
+        self.attenuation = attenuation
+
+    def change_attenuation(self):
+        self.attenuator.attenuation = self.attenuation
+        self.finished.emit()
 
 class MainWindow(QtWidgets.QWidget):
     def __init__(self, attenuator_list=[], *args, **kwargs):
@@ -27,6 +38,12 @@ class MainWindow(QtWidgets.QWidget):
         self.trace_file_path = None
         self.trace_array = None
         self.create_trace_image()
+
+        # # Threading
+        # self.demo_thread = QtCore.QThread()  # Thread for demo
+        # self.demo_worker = AttenuatorWorker()
+        # self.demo_worker.moveToThread(self.demo_thread)
+        # self.demo_thread.start()
 
         # Demo
         self.demo_timer = QtCore.QTimer(self)  # Timer for demo
@@ -231,22 +248,36 @@ class MainWindow(QtWidgets.QWidget):
     def running_demo(self):
         if self.demo_index == self.trace_array.shape[0]:
             self.demo_index = 0
-            self.demo_timer.setInterval(1000)
+            time_delay = 1000
+            self.demo_timer.setInterval(time_delay)
         else:
             time_delay = self.trace_array[self.demo_index, 0] * 1000
             self.demo_timer.setInterval(time_delay)
-        print(self.trace_array[self.demo_index, 1], time_delay)
-        self.chosen_attenuator.attenuation = self.trace_array[self.demo_index, 1]
+        print(self.trace_array[self.demo_index, 1], time_delay, self.demo_index)
+        # self.chosen_attenuator.attenuation = self.trace_array[self.demo_index, 1]
+        self.update_attenuation(self.trace_array[self.demo_index, 1])
         
         self.demo_index += 1
+
+    def update_attenuation(self, attenuation):
+        self.demo_thread = QtCore.QThread()  # Thread for demo
+        self.demo_worker = AttenuatorWorker(self.chosen_attenuator, attenuation)
+        self.demo_worker.moveToThread(self.demo_thread)
+        self.demo_thread.started.connect(self.demo_worker.change_attenuation)
+        self.demo_worker.finished.connect(self.demo_thread.quit)
+        self.demo_worker.finished.connect(self.demo_worker.deleteLater)
+        self.demo_thread.finished.connect(self.demo_thread.deleteLater)
+
+        self.demo_thread.start()
+
         
 
 # test_atten = Attenuator625(address='10.200.1.9', timedelay=0.1, tcp_port=10001)
-# test_atten = Attenuator024('COM3', timedelay=0, timeout=0.44, baudrate=31250)
-# print(test_atten.id())
+test_atten = Attenuator024('COM3', timedelay=0, timeout=0.44, baudrate=31250)
+print(test_atten.id())
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     app.setStyle('Fusion')
-    window = MainWindow(['1', '2'])
+    window = MainWindow(['1', '2', test_atten])
     window.show()
     app.exec_()
